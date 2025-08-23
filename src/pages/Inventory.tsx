@@ -71,7 +71,10 @@ export function Inventory() {
       />
 
       
-      
+      <AddInventoryModal 
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+      />
     </div>
   )
 }
