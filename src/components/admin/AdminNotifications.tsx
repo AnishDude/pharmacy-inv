@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Bell, X, Check, Package, Truck, CheckCircle, AlertCircle } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Bell, X, Check, Package, Truck, CheckCircle, AlertCircle, Wifi } from 'lucide-react'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -17,6 +17,15 @@ export const AdminNotifications: React.FC<AdminNotificationsProps> = ({ classNam
   } = useNotificationStore()
   
   const [isOpen, setIsOpen] = useState(false)
+  const [isLive, setIsLive] = useState(true)
+
+  // Animate live indicator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsLive(prev => !prev)
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [])
 
   if (!user) return null
 
@@ -61,14 +70,22 @@ export const AdminNotifications: React.FC<AdminNotificationsProps> = ({ classNam
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-400 hover:text-gray-500 transition-colors"
+        className="relative p-2 text-gray-400 hover:text-gray-500 transition-colors group"
+        title="Live notifications enabled"
       >
         <Bell className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
+        {/* Live indicator */}
+        <span 
+          className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full transition-all duration-500 ${
+            isLive ? 'bg-green-500 scale-110' : 'bg-green-400 scale-100'
+          }`}
+          title="Real-time updates active"
+        />
       </button>
 
       {/* Notification Dropdown */}
@@ -82,7 +99,13 @@ export const AdminNotifications: React.FC<AdminNotificationsProps> = ({ classNam
             {/* Header */}
             <div className="px-4 py-3 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Admin Notifications</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Admin Notifications</h3>
+                  <div className="flex items-center mt-1 text-xs text-green-600">
+                    <Wifi className="h-3 w-3 mr-1" />
+                    <span>Live updates active</span>
+                  </div>
+                </div>
                 <div className="flex items-center space-x-2">
                   {unreadCount > 0 && (
                     <button

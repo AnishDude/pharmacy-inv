@@ -144,6 +144,7 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                       <input
                         type="date"
                         className="input w-full"
+                        min={new Date().toISOString().split('T')[0]}
                         required
                       />
                     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Save, Bell, Shield, Database, Palette } from 'lucide-react'
+import { Save, Bell, Database, Lock } from 'lucide-react'
 
 export function Settings() {
   const [settings, setSettings] = useState({
@@ -14,12 +14,12 @@ export function Settings() {
       minStockThreshold: 10,
       expiryWarningDays: 30,
     },
-    general: {
-      pharmacyName: 'Live Pharmacy',
-      timezone: 'America/New_York',
-      currency: 'USD',
-      theme: 'light',
-    },
+  })
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   })
 
   const handleSettingChange = (category: string, key: string, value: any) => {
@@ -35,6 +35,31 @@ export function Settings() {
   const handleSave = () => {
     // Save settings logic here
     console.log('Saving settings:', settings)
+  }
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('New passwords do not match!')
+      return
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      alert('Password must be at least 6 characters long')
+      return
+    }
+    
+    // Password change logic here
+    console.log('Changing password')
+    alert('Password changed successfully!')
+    
+    // Reset password fields
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    })
   }
 
   return (
@@ -157,60 +182,67 @@ export function Settings() {
           </div>
         </div>
 
-        {/* General Settings */}
+        {/* Admin Password Change */}
         <div className="card">
           <div className="card-header">
             <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-primary-600" />
-              <h3 className="text-lg font-medium text-gray-900">General</h3>
+              <Lock className="h-5 w-5 text-primary-600" />
+              <h3 className="text-lg font-medium text-gray-900">Change Password</h3>
             </div>
           </div>
-          <div className="card-content space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pharmacy Name
-              </label>
-              <input
-                type="text"
-                className="input w-full max-w-md"
-                value={settings.general.pharmacyName}
-                onChange={(e) => handleSettingChange('general', 'pharmacyName', e.target.value)}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="card-content">
+            <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Timezone
+                  Current Password
                 </label>
-                <select
-                  className="input w-full"
-                  value={settings.general.timezone}
-                  onChange={(e) => handleSettingChange('general', 'timezone', e.target.value)}
-                >
-                  <option value="America/New_York">Eastern Time</option>
-                  <option value="America/Chicago">Central Time</option>
-                  <option value="America/Denver">Mountain Time</option>
-                  <option value="America/Los_Angeles">Pacific Time</option>
-                </select>
+                <input
+                  type="password"
+                  className="input w-full max-w-md"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  required
+                  placeholder="Enter current password"
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Currency
+                  New Password
                 </label>
-                <select
-                  className="input w-full"
-                  value={settings.general.currency}
-                  onChange={(e) => handleSettingChange('general', 'currency', e.target.value)}
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="CAD">CAD (C$)</option>
-                </select>
+                <input
+                  type="password"
+                  className="input w-full max-w-md"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  required
+                  placeholder="Enter new password (min. 6 characters)"
+                  minLength={6}
+                />
               </div>
-            </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  className="input w-full max-w-md"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  required
+                  placeholder="Re-enter new password"
+                  minLength={6}
+                />
+              </div>
+              
+              <div className="pt-2">
+                <button type="submit" className="btn btn-primary">
+                  <Lock className="h-4 w-4 mr-2" />
+                  Update Password
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 

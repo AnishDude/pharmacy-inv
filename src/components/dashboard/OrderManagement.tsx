@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Package, 
   Truck, 
@@ -12,7 +12,8 @@ import {
   User,
   Building2,
   Mail,
-  Phone
+  Phone,
+  Wifi
 } from 'lucide-react'
 import { useOrderStore } from '@/stores/orderStore'
 import toast from 'react-hot-toast'
@@ -33,6 +34,15 @@ export const OrderManagement: React.FC<OrderManagementProps> = ({ className = ''
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null)
   const [trackingNumber, setTrackingNumber] = useState('')
+  const [isLive, setIsLive] = useState(true)
+
+  // Animate live indicator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsLive(prev => !prev)
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [])
 
   const statusOptions = [
     { value: 'all', label: 'All Orders', count: orders.length },
@@ -123,8 +133,19 @@ export const OrderManagement: React.FC<OrderManagementProps> = ({ className = ''
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Order Management</h2>
-            <p className="text-sm text-gray-500">Manage customer orders and dispatch tracking</p>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Order Management</h2>
+              <div className="flex items-center gap-1 text-xs text-green-600">
+                <span 
+                  className={`h-2 w-2 rounded-full transition-all duration-500 ${
+                    isLive ? 'bg-green-500 scale-110' : 'bg-green-400 scale-100'
+                  }`}
+                />
+                <Wifi className="h-3 w-3" />
+                <span>Live</span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">Manage customer orders and dispatch tracking • Real-time updates enabled</p>
           </div>
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Package className="h-4 w-4" />

@@ -3,6 +3,7 @@ import { Menu, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavigate } from 'react-router-dom'
 import { AdminNotifications } from '@/components/admin/AdminNotifications'
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications'
 import toast from 'react-hot-toast'
 
 interface HeaderProps {
@@ -13,6 +14,9 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+  
+  // Enable real-time notifications for admin
+  useRealtimeNotifications(user?.role === 'admin')
 
   const handleLogout = () => {
     logout()

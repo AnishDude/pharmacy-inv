@@ -138,6 +138,7 @@ export function AddInventoryModal({ isOpen, onClose }: AddInventoryModalProps) {
                     <input
                       type="date"
                       className="input w-full"
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
 
