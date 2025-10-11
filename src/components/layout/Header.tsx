@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { Menu, Bell, User, LogOut, Settings, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { Menu, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavigate } from 'react-router-dom'
+import { AdminNotifications } from '@/components/admin/AdminNotifications'
 import toast from 'react-hot-toast'
 
 interface HeaderProps {
@@ -57,13 +58,8 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           <div className="flex items-center gap-x-4 lg:gap-x-6">
-            <button
-              type="button"
-              className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
-            >
-              <span className="sr-only">View notifications</span>
-              <Bell className="h-6 w-6" aria-hidden="true" />
-            </button>
+            {/* Admin Notifications */}
+            <AdminNotifications />
 
             {/* Separator */}
             <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" aria-hidden="true" />

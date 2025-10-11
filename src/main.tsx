@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { Toaster } from 'react-hot-toast'
 import App from './App.tsx'
 import { AuthGuard } from './components/auth/AuthGuard'
+import { CustomerAuthGuard } from './components/auth/CustomerAuthGuard'
 import './index.css'
 
 // Error Boundary Component
@@ -128,21 +129,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <ThemeProvider>
             <AuthGuard>
-              <PerformanceMonitor />
-              <React.Suspense fallback={<LoadingSpinner />}>
-                <App />
-              </React.Suspense>
-              <DevTools />
-              <Toaster 
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: '#363636',
-                    color: '#fff',
-                  },
-                }}
-              />
+              <CustomerAuthGuard>
+                <PerformanceMonitor />
+                <React.Suspense fallback={<LoadingSpinner />}>
+                  <App />
+                </React.Suspense>
+                <DevTools />
+                <Toaster 
+                  position="top-right"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: '#363636',
+                      color: '#fff',
+                    },
+                  }}
+                />
+              </CustomerAuthGuard>
             </AuthGuard>
           </ThemeProvider>
         </BrowserRouter>

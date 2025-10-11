@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Products', href: '/products', icon: Pill },
   { name: 'Suppliers', href: '/suppliers', icon: Truck },

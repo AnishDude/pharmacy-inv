@@ -1,28 +1,45 @@
-import { Package, AlertTriangle, TrendingUp, Users } from 'lucide-react'
+import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart } from 'lucide-react'
 import { StatsCard } from '@/components/ui/StatsCard'
 import { RecentActivity } from '@/components/dashboard/RecentActivity'
 import { LowStockAlerts } from '@/components/dashboard/LowStockAlerts'
 import { InventoryChart } from '@/components/dashboard/InventoryChart'
+import { OrderManagement } from '@/components/dashboard/OrderManagement'
+import { useOrderStore } from '@/stores/orderStore'
+import { useInventoryStore } from '@/stores/inventoryStore'
 
 export function Dashboard() {
+  const { orders, getOrdersByStatus } = useOrderStore()
+  const { medicines, getLowStockMedicines } = useInventoryStore()
+  
+  const pendingOrders = getOrdersByStatus('pending')
+  const totalOrderValue = orders.reduce((sum, order) => sum + order.totalAmount, 0)
+  const lowStockItems = getLowStockMedicines()
+  
   const stats = [
     {
       name: 'Total Products',
-      value: '1,247',
+      value: medicines.length.toString(),
       change: '+12%',
       changeType: 'increase' as const,
       icon: Package,
     },
     {
       name: 'Low Stock Items',
-      value: '23',
-      change: '-5%',
-      changeType: 'decrease' as const,
+      value: lowStockItems.length.toString(),
+      change: lowStockItems.length > 0 ? 'Needs attention' : 'All good',
+      changeType: lowStockItems.length > 0 ? 'increase' as const : 'decrease' as const,
       icon: AlertTriangle,
     },
     {
-      name: 'Monthly Sales',
-      value: '$45,231',
+      name: 'Pending Orders',
+      value: pendingOrders.length.toString(),
+      change: pendingOrders.length > 0 ? 'Needs attention' : 'All caught up',
+      changeType: pendingOrders.length > 0 ? 'increase' as const : 'decrease' as const,
+      icon: ShoppingCart,
+    },
+    {
+      name: 'Total Sales',
+      value: `$${totalOrderValue.toLocaleString()}`,
       change: '+18%',
       changeType: 'increase' as const,
       icon: TrendingUp,
@@ -56,6 +73,11 @@ export function Dashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <InventoryChart />
         <RecentActivity />
+      </div>
+
+      {/* Order Management */}
+      <div className="mt-6">
+        <OrderManagement />
       </div>
 
       {/* Low Stock Alerts */}

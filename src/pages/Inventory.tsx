@@ -3,8 +3,10 @@ import { Plus, Search, Filter, Download } from 'lucide-react'
 import { InventoryTable } from '@/components/inventory/InventoryTable'
 import { InventoryFilters } from '@/components/inventory/InventoryFilters'
 import { AddInventoryModal } from '@/components/inventory/AddInventoryModal'
+import { useInventoryStore } from '@/stores/inventoryStore'
 
 export function Inventory() {
+  const { medicines, getLowStockMedicines } = useInventoryStore()
   const [showAddModal, setShowAddModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filters, setFilters] = useState({
@@ -12,6 +14,8 @@ export function Inventory() {
     status: '',
     supplier: '',
   })
+
+  const lowStockItems = getLowStockMedicines()
 
   return (
     <div>
