@@ -111,8 +111,28 @@ export const useInventoryStore = create<InventoryState>()(
       },
 
       reduceStock: (medicineId: string, quantity: number) => {
-        const { updateStock } = get()
-        updateStock(medicineId, quantity, 'subtract')
+        const { updateStock, getMedicineById } = get()
+        const medicine = getMedicineById(medicineId)
+        
+        if (medicine) {
+          updateStock(medicineId, quantity, 'subtract')
+          
+          // Add activity for stock reduction
+          import('./activityStore').then(({ useActivityStore }) => {
+            const activityStore = useActivityStore.getState()
+            activityStore.addActivity({
+              type: 'stock_reduced',
+              message: `Stock reduced: ${quantity} units of ${medicine.name} (${medicine.stock - quantity} → ${medicine.stock - quantity} remaining)`,
+              medicineId: medicineId,
+              quantity: quantity,
+              metadata: {
+                medicineName: medicine.name,
+                previousStock: medicine.stock,
+                newStock: medicine.stock - quantity
+              }
+            })
+          })
+        }
       },
 
       addStock: (medicineId: string, quantity: number) => {

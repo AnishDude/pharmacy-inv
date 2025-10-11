@@ -167,6 +167,22 @@ export const useOrderStore = create<OrderState>()(
             title: 'Order Dispatched',
             message: `Order #${order.id} has been dispatched to ${order.companyName}${trackingNumber ? ` with tracking number: ${trackingNumber}` : ''}`
           })
+
+          // Add activity for order dispatched
+          import('./activityStore').then(({ useActivityStore }) => {
+            const activityStore = useActivityStore.getState()
+            activityStore.addActivity({
+              type: 'order_dispatched',
+              message: `Order #${order.id} dispatched to ${order.companyName}${trackingNumber ? ` (Tracking: ${trackingNumber})` : ''}`,
+              orderId: order.id,
+              customerId: order.customerId,
+              metadata: {
+                trackingNumber,
+                companyName: order.companyName,
+                totalAmount: order.totalAmount
+              }
+            })
+          })
         }
       }
     }),
