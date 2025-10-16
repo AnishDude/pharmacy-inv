@@ -1,6 +1,8 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { X } from 'lucide-react'
+import { useInventoryStore } from '@/stores/inventoryStore'
+import toast from 'react-hot-toast'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -8,6 +10,57 @@ interface AddProductModalProps {
 }
 
 export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
+  const { addMedicine } = useInventoryStore()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    category: '',
+    stock: 0,
+    minStockLevel: 0,
+    maxStockLevel: 1000,
+    price: 0,
+    manufacturer: '',
+    dosage: '',
+    prescription: false
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      await addMedicine(formData)
+      toast.success('Product added successfully!')
+      onClose()
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        category: '',
+        stock: 0,
+        minStockLevel: 0,
+        maxStockLevel: 1000,
+        price: 0,
+        manufacturer: '',
+        dosage: '',
+        prescription: false
+      })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to add product')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseFloat(value) || 0 : value
+    }))
+  }
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -48,13 +101,16 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                   </button>
                 </div>
 
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Product Name
+                      Product Name *
                     </label>
                     <input
                       type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
                       className="input w-full"
                       placeholder="Enter product name"
                       required
@@ -64,26 +120,36 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Category
+                        Category *
                       </label>
-                      <select className="input w-full" required>
+                      <select 
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="input w-full" 
+                        required
+                      >
                         <option value="">Select category</option>
-                        <option value="prescription">Prescription</option>
-                        <option value="otc">Over-the-Counter</option>
-                        <option value="vitamins">Vitamins & Supplements</option>
-                        <option value="medical">Medical Supplies</option>
-                        <option value="health">Health & Beauty</option>
+                        <option value="Pain Relief">Pain Relief</option>
+                        <option value="Antibiotic">Antibiotic</option>
+                        <option value="Vitamin">Vitamins & Supplements</option>
+                        <option value="First Aid">First Aid</option>
+                        <option value="Digestive">Digestive</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Price
+                        Price *
                       </label>
                       <input
                         type="number"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleChange}
                         step="0.01"
                         className="input w-full"
                         placeholder="0.00"
+                        min="0"
                         required
                       />
                     </div>
@@ -92,23 +158,31 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Initial Stock
+                        Initial Stock *
                       </label>
                       <input
                         type="number"
+                        name="stock"
+                        value={formData.stock}
+                        onChange={handleChange}
                         className="input w-full"
                         placeholder="0"
+                        min="0"
                         required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Min Stock Level
+                        Min Stock Level *
                       </label>
                       <input
                         type="number"
+                        name="minStockLevel"
+                        value={formData.minStockLevel}
+                        onChange={handleChange}
                         className="input w-full"
                         placeholder="0"
+                        min="0"
                         required
                       />
                     </div>
@@ -119,6 +193,9 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                       Description
                     </label>
                     <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
                       className="input w-full h-20 resize-none"
                       placeholder="Enter product description (optional)"
                     />
@@ -127,50 +204,30 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Supplier
-                      </label>
-                      <select className="input w-full" required>
-                        <option value="">Select supplier</option>
-                        <option value="medsupply">MedSupply Co.</option>
-                        <option value="healthplus">HealthPlus Ltd.</option>
-                        <option value="pharmadirect">PharmaDirect</option>
-                        <option value="medicalsolutions">Medical Solutions Inc.</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="date"
-                        className="input w-full"
-                        min={new Date().toISOString().split('T')[0]}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Barcode/SKU
+                        Manufacturer *
                       </label>
                       <input
                         type="text"
+                        name="manufacturer"
+                        value={formData.manufacturer}
+                        onChange={handleChange}
                         className="input w-full"
-                        placeholder="Enter barcode or SKU"
+                        placeholder="Enter manufacturer"
+                        required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Unit
+                        Dosage
                       </label>
-                      <select className="input w-full">
-                        <option value="unit">Unit</option>
-                        <option value="box">Box</option>
-                        <option value="bottle">Bottle</option>
-                        <option value="pack">Pack</option>
-                      </select>
+                      <input
+                        type="text"
+                        name="dosage"
+                        value={formData.dosage}
+                        onChange={handleChange}
+                        className="input w-full"
+                        placeholder="e.g., 500mg, 10ml"
+                      />
                     </div>
                   </div>
 
@@ -179,14 +236,16 @@ export function AddProductModal({ isOpen, onClose }: AddProductModalProps) {
                       type="button"
                       className="btn btn-secondary btn-md flex-1"
                       onClick={onClose}
+                      disabled={isSubmitting}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       className="btn btn-primary btn-md flex-1"
+                      disabled={isSubmitting}
                     >
-                      Add Product
+                      {isSubmitting ? 'Adding...' : 'Add Product'}
                     </button>
                   </div>
                 </form>
