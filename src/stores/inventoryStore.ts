@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { medicinesAPI } from '../utils/api'
 
 export interface Medicine {
   id: string
@@ -20,12 +21,15 @@ export interface InventoryState {
   isLoading: boolean
   
   // Actions
+  fetchMedicines: () => Promise<void>
   getMedicineById: (id: string) => Medicine | undefined
-  updateStock: (medicineId: string, quantity: number, operation: 'add' | 'subtract') => void
-  reduceStock: (medicineId: string, quantity: number) => void
-  addStock: (medicineId: string, quantity: number) => void
+  updateStock: (medicineId: string, quantity: number, operation: 'add' | 'subtract') => Promise<void>
+  reduceStock: (medicineId: string, quantity: number) => Promise<void>
+  addStock: (medicineId: string, quantity: number) => Promise<void>
   getLowStockMedicines: () => Medicine[]
-  updateMedicine: (medicineId: string, updates: Partial<Medicine>) => void
+  updateMedicine: (medicineId: string, updates: Partial<Medicine>) => Promise<void>
+  addMedicine: (medicine: Omit<Medicine, 'id'>) => Promise<void>
+  deleteMedicine: (medicineId: string) => Promise<void>
 }
 
 // Initial mock medicines data
@@ -90,39 +94,66 @@ export const useInventoryStore = create<InventoryState>()(
       medicines: initialMedicines,
       isLoading: false,
 
+      fetchMedicines: async () => {
+        set({ isLoading: true })
+        try {
+          const response = await medicinesAPI.getAll()
+          const medicines = response.data.map((med: any) => ({
+            id: med.id.toString(),
+            name: med.name,
+            description: med.description || '',
+            price: parseFloat(med.price),
+            stock: med.stock,  // Backend uses 'stock' not 'quantity'
+            category: med.category,
+            manufacturer: med.manufacturer || '',
+            dosage: med.dosage || '',
+            prescription: med.prescription_required || false,  // Backend uses 'prescription_required'
+            minStockLevel: med.min_stock_level,
+            maxStockLevel: med.max_stock_level
+          }))
+          set({ medicines, isLoading: false })
+        } catch (error) {
+          console.error('Failed to fetch medicines:', error)
+          set({ isLoading: false })
+        }
+      },
+
       getMedicineById: (id: string) => {
         const { medicines } = get()
         return medicines.find(medicine => medicine.id === id)
       },
 
-      updateStock: (medicineId: string, quantity: number, operation: 'add' | 'subtract') => {
-        set(state => ({
-          medicines: state.medicines.map(medicine =>
-            medicine.id === medicineId
-              ? {
-                  ...medicine,
-                  stock: operation === 'add' 
-                    ? medicine.stock + quantity 
-                    : Math.max(0, medicine.stock - quantity)
-                }
-              : medicine
-          )
-        }))
+      updateStock: async (medicineId: string, quantity: number, operation: 'add' | 'subtract') => {
+        try {
+          // Use the backend's stock update endpoint with proper payload
+          const response = await medicinesAPI.updateStock(medicineId, quantity, operation)
+          
+          set(state => ({
+            medicines: state.medicines.map(med =>
+              med.id === medicineId
+                ? { ...med, stock: response.data.stock }
+                : med
+            )
+          }))
+        } catch (error) {
+          console.error('Failed to update stock:', error)
+          throw error
+        }
       },
 
-      reduceStock: (medicineId: string, quantity: number) => {
+      reduceStock: async (medicineId: string, quantity: number) => {
         const { updateStock, getMedicineById } = get()
         const medicine = getMedicineById(medicineId)
         
         if (medicine) {
-          updateStock(medicineId, quantity, 'subtract')
+          await updateStock(medicineId, quantity, 'subtract')
           
           // Add activity for stock reduction
           import('./activityStore').then(({ useActivityStore }) => {
             const activityStore = useActivityStore.getState()
             activityStore.addActivity({
               type: 'stock_reduced',
-              message: `Stock reduced: ${quantity} units of ${medicine.name} (${medicine.stock - quantity} → ${medicine.stock - quantity} remaining)`,
+              message: `Stock reduced: ${quantity} units of ${medicine.name}`,
               medicineId: medicineId,
               quantity: quantity,
               metadata: {
@@ -135,9 +166,9 @@ export const useInventoryStore = create<InventoryState>()(
         }
       },
 
-      addStock: (medicineId: string, quantity: number) => {
+      addStock: async (medicineId: string, quantity: number) => {
         const { updateStock } = get()
-        updateStock(medicineId, quantity, 'add')
+        await updateStock(medicineId, quantity, 'add')
       },
 
       getLowStockMedicines: () => {
@@ -147,14 +178,72 @@ export const useInventoryStore = create<InventoryState>()(
         )
       },
 
-      updateMedicine: (medicineId: string, updates: Partial<Medicine>) => {
-        set(state => ({
-          medicines: state.medicines.map(medicine =>
-            medicine.id === medicineId
-              ? { ...medicine, ...updates }
-              : medicine
-          )
-        }))
+      updateMedicine: async (medicineId: string, updates: Partial<Medicine>) => {
+        try {
+          await medicinesAPI.update(medicineId, updates)
+          
+          set(state => ({
+            medicines: state.medicines.map(medicine =>
+              medicine.id === medicineId
+                ? { ...medicine, ...updates }
+                : medicine
+            )
+          }))
+        } catch (error) {
+          console.error('Failed to update medicine:', error)
+          throw error
+        }
+      },
+
+      addMedicine: async (medicine: Omit<Medicine, 'id'>) => {
+        try {
+          const response = await medicinesAPI.create({
+            name: medicine.name,
+            description: medicine.description,
+            price: medicine.price,
+            stock: medicine.stock,
+            category: medicine.category,
+            manufacturer: medicine.manufacturer,
+            dosage: medicine.dosage,
+            prescription_required: medicine.prescription,
+            min_stock_level: medicine.minStockLevel || 0,
+            max_stock_level: medicine.maxStockLevel || 1000
+          })
+          
+          const newMedicine: Medicine = {
+            id: response.data.id.toString(),
+            name: response.data.name,
+            description: response.data.description || '',
+            price: parseFloat(response.data.price),
+            stock: response.data.stock,
+            category: response.data.category,
+            manufacturer: response.data.manufacturer || '',
+            dosage: response.data.dosage || '',
+            prescription: response.data.prescription_required || false,
+            minStockLevel: response.data.min_stock_level,
+            maxStockLevel: response.data.max_stock_level
+          }
+          
+          set(state => ({
+            medicines: [...state.medicines, newMedicine]
+          }))
+        } catch (error) {
+          console.error('Failed to add medicine:', error)
+          throw error
+        }
+      },
+
+      deleteMedicine: async (medicineId: string) => {
+        try {
+          await medicinesAPI.delete(medicineId)
+          
+          set(state => ({
+            medicines: state.medicines.filter(med => med.id !== medicineId)
+          }))
+        } catch (error) {
+          console.error('Failed to delete medicine:', error)
+          throw error
+        }
       }
     }),
     {
