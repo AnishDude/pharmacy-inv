@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Package, AlertTriangle, TrendingUp, Users, ShoppingCart } from 'lucide-react'
 import { StatsCard } from '@/components/ui/StatsCard'
 import { RecentActivity } from '@/components/dashboard/RecentActivity'
@@ -8,8 +9,15 @@ import { useOrderStore } from '@/stores/orderStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
 
 export function Dashboard() {
-  const { orders, getOrdersByStatus } = useOrderStore()
-  const { medicines, getLowStockMedicines } = useInventoryStore()
+  const { orders, getOrdersByStatus, fetchOrders } = useOrderStore()
+  const { medicines, getLowStockMedicines, fetchMedicines } = useInventoryStore()
+  
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchMedicines()
+    fetchOrders()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   
   const pendingOrders = getOrdersByStatus('pending')
   const totalOrderValue = orders.reduce((sum, order) => sum + order.totalAmount, 0)
