@@ -5,6 +5,7 @@ from app.models.user import User, UserRole
 from app.models.medicine import Medicine
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.activity import Activity
+from app.models.sale import Sale, SaleItem
 
 __all__ = [
     "User",
@@ -14,5 +15,7 @@ __all__ = [
     "OrderItem",
     "OrderStatus",
     "Activity",
+    "Sale",
+    "SaleItem",
 ]
 
