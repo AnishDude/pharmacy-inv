@@ -1,36 +1,33 @@
 import { Pill, Edit, Trash2, Eye, AlertTriangle } from 'lucide-react'
-
-interface Product {
-  id: number
-  name: string
-  category: string
-  price: number
-  stock: number
-  minStock: number
-  expiryDate: string
-  supplier: string
-}
+import { useInventoryStore, Medicine } from '@/stores/inventoryStore'
+import toast from 'react-hot-toast'
 
 interface ProductCardProps {
-  product: Product
+  product: Medicine
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const isLowStock = product.stock <= product.minStock
-  const isExpiringSoon = new Date(product.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  const { deleteMedicine } = useInventoryStore()
+  const isLowStock = product.minStockLevel ? product.stock <= product.minStockLevel : false
 
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'prescription':
-        return 'bg-red-100 text-red-800'
-      case 'otc':
-        return 'bg-blue-100 text-blue-800'
-      case 'vitamins':
-        return 'bg-green-100 text-green-800'
-      case 'medical':
-        return 'bg-purple-100 text-purple-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+    const cat = category.toLowerCase()
+    if (cat.includes('pain')) return 'bg-red-100 text-red-800'
+    if (cat.includes('antibiotic')) return 'bg-orange-100 text-orange-800'
+    if (cat.includes('vitamin')) return 'bg-green-100 text-green-800'
+    if (cat.includes('first aid') || cat.includes('aid')) return 'bg-purple-100 text-purple-800'
+    if (cat.includes('digestive')) return 'bg-blue-100 text-blue-800'
+    return 'bg-gray-100 text-gray-800'
+  }
+
+  const handleDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
+      try {
+        await deleteMedicine(product.id)
+        toast.success('Product deleted successfully')
+      } catch (error) {
+        toast.error('Failed to delete product')
+      }
     }
   }
 
@@ -60,7 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-gray-500">Price:</span>
-            <p className="font-medium text-gray-900">${product.price}</p>
+            <p className="font-medium text-gray-900">${product.price.toFixed(2)}</p>
           </div>
           <div>
             <span className="text-gray-500">Stock:</span>
@@ -70,21 +67,27 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <div>
             <span className="text-gray-500">Min Stock:</span>
-            <p className="font-medium text-gray-900">{product.minStock}</p>
+            <p className="font-medium text-gray-900">{product.minStockLevel || 'N/A'}</p>
           </div>
           <div>
-            <span className="text-gray-500">Expiry:</span>
-            <p className={`font-medium text-sm ${isExpiringSoon ? 'text-danger-600' : 'text-gray-900'}`}>
-              {new Date(product.expiryDate).toLocaleDateString()}
+            <span className="text-gray-500">Dosage:</span>
+            <p className="font-medium text-sm text-gray-900">
+              {product.dosage || 'N/A'}
             </p>
           </div>
         </div>
 
         <div className="pt-3 border-t border-gray-200">
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Supplier:</span> {product.supplier}
+            <span className="font-medium">Manufacturer:</span> {product.manufacturer}
           </p>
         </div>
+
+        {product.description && (
+          <div className="text-xs text-gray-500 line-clamp-2">
+            {product.description}
+          </div>
+        )}
 
         {isLowStock && (
           <div className="bg-warning-50 border border-warning-200 rounded-md p-2">
@@ -94,10 +97,10 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
 
-        {isExpiringSoon && (
-          <div className="bg-danger-50 border border-danger-200 rounded-md p-2">
-            <p className="text-xs text-danger-700">
-              ⚠️ Expires soon - Check expiry date
+        {product.prescription && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-2">
+            <p className="text-xs text-red-700">
+              📋 Prescription required
             </p>
           </div>
         )}
@@ -105,13 +108,23 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="card-footer">
         <div className="flex gap-2 w-full">
-          <button className="btn btn-secondary btn-sm flex-1">
+          <button 
+            className="btn btn-secondary btn-sm flex-1"
+            title="View details"
+          >
             <Eye className="h-4 w-4" />
           </button>
-          <button className="btn btn-secondary btn-sm flex-1">
+          <button 
+            className="btn btn-secondary btn-sm flex-1"
+            title="Edit product"
+          >
             <Edit className="h-4 w-4" />
           </button>
-          <button className="btn btn-danger btn-sm flex-1">
+          <button 
+            className="btn btn-danger btn-sm flex-1"
+            title="Delete product"
+            onClick={handleDelete}
+          >
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
