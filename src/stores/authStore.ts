@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { authAPI } from '../utils/api'
 
 export interface User {
   id: string
@@ -11,98 +12,117 @@ export interface User {
 
 export interface AuthState {
   user: User | null
+  token: string | null
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
-  checkAuth: () => void
-  updateProfile: (updates: Partial<User>) => void
-}
-
-// Mock authentication - replace with real API calls
-const mockLogin = async (email: string, password: string): Promise<User> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // Mock validation - in real app, this would be an API call
-  if (email === 'admin@pharmacy.com' && password === 'admin123') {
-    return {
-      id: '1',
-      email: 'admin@pharmacy.com',
-      name: 'Admin User',
-      role: 'admin',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face'
-    }
-  } else if (email === 'pharmacist@pharmacy.com' && password === 'pharma123') {
-    return {
-      id: '2',
-      email: 'pharmacist@pharmacy.com',
-      name: 'Dr. Sarah Johnson',
-      role: 'pharmacist',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
-    }
-  } else if (email === 'staff@pharmacy.com' && password === 'staff123') {
-    return {
-      id: '3',
-      email: 'staff@pharmacy.com',
-      name: 'John Smith',
-      role: 'staff',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face'
-    }
-  } else {
-    throw new Error('Invalid email or password')
-  }
+  checkAuth: () => Promise<void>
+  updateProfile: (updates: Partial<User>) => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true })
         try {
-          const user = await mockLogin(email, password)
+          const response = await authAPI.login(email, password)
+          const { access_token, user } = response.data
+          
+          // Map backend user data to frontend User interface
+          const mappedUser: User = {
+            id: user.id.toString(),
+            email: user.email,
+            name: user.name || user.email,
+            role: user.role || 'staff',
+            avatar: user.avatar_url
+          }
+          
           set({ 
-            user, 
+            user: mappedUser,
+            token: access_token,
             isAuthenticated: true, 
             isLoading: false 
           })
-        } catch (error) {
+        } catch (error: any) {
           set({ isLoading: false })
-          throw error
+          const errorMessage = error.response?.data?.detail || 'Invalid email or password'
+          throw new Error(errorMessage)
         }
       },
 
       logout: () => {
         set({ 
-          user: null, 
+          user: null,
+          token: null,
           isAuthenticated: false 
         })
       },
 
-      checkAuth: () => {
-        const { user } = get()
-        if (user) {
-          set({ isAuthenticated: true })
+      checkAuth: async () => {
+        const { token } = get()
+        if (token) {
+          try {
+            const response = await authAPI.me()
+            const user = response.data
+            
+            // Map backend user data to frontend User interface
+            const mappedUser: User = {
+              id: user.id.toString(),
+              email: user.email,
+              name: user.name || user.email,
+              role: user.role || 'staff',
+              avatar: user.avatar_url
+            }
+            
+            set({ 
+              user: mappedUser,
+              isAuthenticated: true 
+            })
+          } catch (error) {
+            // Token is invalid, clear auth
+            set({ 
+              user: null,
+              token: null,
+              isAuthenticated: false 
+            })
+          }
         }
       },
 
-      updateProfile: (updates: Partial<User>) => {
+      updateProfile: async (updates: Partial<User>) => {
         const { user } = get()
         if (user) {
-          set({ 
-            user: { ...user, ...updates }
-          })
+          try {
+            // Update on backend
+            const response = await authAPI.updateProfile(updates)
+            const updatedUser: User = {
+              id: response.data.id.toString(),
+              email: response.data.email,
+              name: response.data.name || response.data.email,
+              role: response.data.role || 'staff',
+              avatar: response.data.avatar_url
+            }
+            
+            set({ user: updatedUser })
+          } catch (error) {
+            console.error('Failed to update profile:', error)
+            throw error
+          }
         }
       }
     }),
     {
       name: 'lipms-auth-storage',
       partialize: (state) => ({ 
-        user: state.user, 
+        user: state.user,
+        token: state.token,
         isAuthenticated: state.isAuthenticated 
       }),
     }
