@@ -88,5 +88,12 @@ export const ordersAPI = {
     api.patch(`/orders/${id}/status`, { status }),
 }
 
-export default api
+// Sales API
+export const salesAPI = {
+  getAll: (params?: { skip?: number; limit?: number }) => 
+    api.get('/sales/', { params }),
+  getById: (id: string) => api.get(`/sales/${id}`),
+  create: (data: any) => api.post('/sales/', data),
+}
 
+export default api
