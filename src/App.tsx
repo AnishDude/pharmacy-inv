@@ -5,6 +5,8 @@ import { Login } from '@/pages/Login'
 import { Dashboard } from '@/pages/Dashboard'
 import { Inventory } from '@/pages/Inventory'
 import { Products } from '@/pages/Products'
+import { POS } from '@/pages/POS'
+import { Sales } from '@/pages/Sales'
 import { Suppliers } from '@/pages/Suppliers'
 import { Reports } from '@/pages/Reports'
 import { Settings } from '@/pages/Settings'
@@ -49,6 +51,20 @@ function App() {
         <ProtectedRoute>
           <Layout>
             <Products />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/pos" element={
+        <ProtectedRoute>
+          <Layout>
+            <POS />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/sales" element={
+        <ProtectedRoute>
+          <Layout>
+            <Sales />
           </Layout>
         </ProtectedRoute>
       } />

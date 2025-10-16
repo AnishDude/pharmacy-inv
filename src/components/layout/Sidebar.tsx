@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { X, Home, Package, Pill, Truck, BarChart3, Settings } from 'lucide-react'
+import { X, Home, Package, Pill, Truck, BarChart3, Settings, ShoppingCart, Receipt } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 interface SidebarProps {
@@ -10,6 +10,8 @@ interface SidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Point of Sale', href: '/pos', icon: ShoppingCart },
+  { name: 'Sales History', href: '/sales', icon: Receipt },
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Products', href: '/products', icon: Pill },
   { name: 'Suppliers', href: '/suppliers', icon: Truck },
