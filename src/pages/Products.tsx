@@ -10,7 +10,7 @@ export function Products() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 12
+  const itemsPerPage = 8 // Show 8 items per page (2 rows of 4 columns)
 
   // Fetch medicines on component mount
   useEffect(() => {
@@ -124,8 +124,8 @@ export function Products() {
         </div>
       )}
 
-      {/* Pagination */}
-      {filteredProducts.length > itemsPerPage && (
+      {/* Pagination - Always show if more than one page */}
+      {totalPages > 1 && (
         <div className="mt-8 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
           <div className="flex flex-1 justify-between sm:hidden">
             <button
