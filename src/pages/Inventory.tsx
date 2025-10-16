@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Search, Filter, Download } from 'lucide-react'
 import { InventoryTable } from '@/components/inventory/InventoryTable'
 import { InventoryFilters } from '@/components/inventory/InventoryFilters'
@@ -6,8 +6,14 @@ import { AddInventoryModal } from '@/components/inventory/AddInventoryModal'
 import { useInventoryStore } from '@/stores/inventoryStore'
 
 export function Inventory() {
-  const { medicines, getLowStockMedicines } = useInventoryStore()
+  const { medicines, getLowStockMedicines, fetchMedicines } = useInventoryStore()
   const [showAddModal, setShowAddModal] = useState(false)
+  
+  // Fetch medicines on component mount
+  useEffect(() => {
+    fetchMedicines()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [searchTerm, setSearchTerm] = useState('')
   const [filters, setFilters] = useState({
     category: '',
